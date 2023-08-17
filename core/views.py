@@ -60,14 +60,7 @@ class UserLoginView(APIView):
     refresh_token = create_refresh_token(user.id) #type: ignore
     serializer = UserSerializer(user, many=False) #type: ignore
 
-    # Chequear si ya tiene refresh token
-    prev_refresh_token = UserRefreshToken.objects.filter(user=user).first()
-
-    # Eliminar el token anterior si existe
-    if prev_refresh_token:
-      prev_refresh_token.delete()
-
-    UserRefreshToken.objects.create(
+    refresh_token_data = UserRefreshToken.objects.create(
       user=user,
       refresh_token=refresh_token,
       expires_at=datetime.datetime.utcnow() + datetime.timedelta(days=7)
@@ -76,7 +69,8 @@ class UserLoginView(APIView):
     return Response({
       "data": {
         "user": serializer.data,
-        "access_token": access_token
+        "access_token": access_token,
+        "refresh_token_id": refresh_token_data.token_id
       }
     })
 
@@ -95,7 +89,12 @@ class RefreshTokenView(APIView):
   authentication_classes = [JwtAuth]
 
   def post(self, req: HttpRequest):
-    token_data = UserRefreshToken.objects.filter(user=req.user).first()
+    token_id = req.GET.get("token-id")
+    
+    if token_id is None:
+      return Response({"message": "The token id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    token_data = UserRefreshToken.objects.filter(user=req.user, token_id=token_id).first()
 
     if not token_data:
       return Response({"message": "Invalid or expired refresh token"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -132,10 +131,15 @@ class UserLogoutView(APIView):
   authentication_classes = [JwtAuth]
 
   def post(self, req: HttpRequest):
-    refresh_token = UserRefreshToken.objects.filter(user=req.user).first()
+    token_id = req.GET.get("token-id")
+    
+    if token_id is None:
+      return Response({"message": "The token id is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    refresh_token = UserRefreshToken.objects.filter(user=req.user, token_id=token_id).first()
 
     if refresh_token is None:
-      return Response({"message": "The user is not logged in"}, status=status.HTTP_400_BAD_REQUEST)
+      return Response({"message": "Invalid token id"})
     
     refresh_token.delete()
 
