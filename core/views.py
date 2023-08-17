@@ -128,6 +128,8 @@ class RefreshTokenView(APIView):
   
 
 class UserLogoutView(APIView):
+  """Cerrar la sesión específica del usuario"""
+
   authentication_classes = [JwtAuth]
 
   def post(self, req: HttpRequest):
@@ -144,6 +146,29 @@ class UserLogoutView(APIView):
     refresh_token.delete()
 
     return Response({"message": "User logged out successfully"})
+
+
+class DeleteActiveRefreshTokensView(APIView):
+  """Eliminar los refresh tokens activos del usuario excepto el de la sesión actual"""
+
+  authentication_classes = [JwtAuth]
+
+  def post(self, req: HttpRequest):
+    current_token_id = req.GET.get("token-id")
+
+    if current_token_id is None:
+      return Response({"message": "The token id is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Chequear si el refresh token es válido
+    token_is_valid = UserRefreshToken.objects.filter(user=req.user, token_id=current_token_id).exists()
+
+    if not token_is_valid:
+      return Response({"message": "Invalid token id"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    # Eliminar los refresh tokens excepto el usado para hacer el request
+    UserRefreshToken.objects.filter(user=req.user).exclude(token_id=current_token_id).delete()
+
+    return Response({"data": "All active sessions deleted successfully"})
   
 
 class ForgotPasswordView(APIView):

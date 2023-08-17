@@ -6,7 +6,8 @@ from .views import (
   UserLogoutView,
   RefreshTokenView,
   ForgotPasswordView,
-  ResetPasswordView
+  ResetPasswordView,
+  DeleteActiveRefreshTokensView
 )
 
 
@@ -18,4 +19,5 @@ urlpatterns = [
   path("refresh-token/", RefreshTokenView.as_view(), name="refresh_token"),
   path("forgot-password/", ForgotPasswordView.as_view(), name="forgot-password"),
   path("reset-password/", ResetPasswordView.as_view(), name="reset-password"),
+  path("delete-active-tokens/", DeleteActiveRefreshTokensView.as_view(), name="delete-active-sessions")
 ]
