@@ -4,6 +4,7 @@ from django_backblaze_b2 import BackblazeB2Storage
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from typing import Any
+from django.utils.crypto import get_random_string
 from django.core.validators import (
   MinLengthValidator,
   RegexValidator,
@@ -46,8 +47,14 @@ class User(AbstractUser):
 class UserRefreshToken(models.Model):
   user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
   refresh_token = models.CharField(max_length=255)
+  token_id = models.CharField(max_length=50, default="")
   expires_at = models.DateTimeField()
   created_at = models.DateTimeField(auto_now_add=True)
+
+  # Generar automáticamente el token id al crearlo
+  def save(self, *args: Any, **kwargs: Any) -> None:
+    self.token_id = get_random_string(40)
+    return super().save(*args, **kwargs)
 
 
 class ResetPasswordToken(models.Model):
