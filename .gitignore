@@ -1,0 +1,31 @@
+*.log
+
+# Secret variables
+.env
+
+# Static files
+/static/
+
+# Media files
+/media/
+
+# Compiled Python files
+*.pyc
+
+# Database
+*.db
+
+# Local development server settings
+/.env
+
+# Pipenv environment
+/.venv/
+
+# VSCode settings
+.vscode/
+
+# PyCharm settings
+.idea/
+
+# Ignore migrations of all apps
+**/migrations/
