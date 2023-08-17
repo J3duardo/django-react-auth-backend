@@ -251,5 +251,8 @@ class ResetPasswordView(APIView):
     reset_password.token = None
     reset_password.expires_at = None
     reset_password.save()
+
+    # Eliminar los refresh tokens de la base de datos
+    UserRefreshToken.objects.filter(user=req.user).delete()
     
     return Response({"message": "Password updated successfully"})
