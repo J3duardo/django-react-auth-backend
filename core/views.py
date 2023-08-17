@@ -78,6 +78,11 @@ class UserLoginView(APIView):
       }
     }
 
+    # Eliminar los refresh tokens expirados
+    # que no hayan sido eliminados de la DB
+    current_time = timezone.make_aware(datetime.datetime.utcnow(), timezone.utc)
+    UserRefreshToken.objects.filter(user=user, expires_at__lte=current_time).delete()
+
     return response
 
 
