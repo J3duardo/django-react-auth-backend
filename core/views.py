@@ -1,4 +1,4 @@
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from rest_framework.views import APIView #type: ignore
 from rest_framework.response import Response #type: ignore
 from rest_framework import status # type: ignore
@@ -66,13 +66,19 @@ class UserLoginView(APIView):
       expires_at=datetime.datetime.utcnow() + datetime.timedelta(days=7)
     )
 
-    return Response({
+    HttpResponse().set_cookie("token_id", refresh_token)
+
+    response = Response()
+    response.set_cookie(key="token_id", value=refresh_token, httponly=True)
+    response.data = {
       "data": {
         "user": serializer.data,
         "access_token": access_token,
         "refresh_token_id": refresh_token_data.token_id
       }
-    })
+    }
+
+    return response
 
 
 class CurrentUserView(APIView):
@@ -145,7 +151,11 @@ class UserLogoutView(APIView):
     
     refresh_token.delete()
 
-    return Response({"message": "User logged out successfully"})
+    response = Response()
+    response.delete_cookie(key="token_id")
+    response.data = {"data": "User logged out successfully"}
+
+    return response
 
 
 class DeleteActiveRefreshTokensView(APIView):
